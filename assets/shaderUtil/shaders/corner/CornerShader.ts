@@ -18,7 +18,7 @@ export default class CornerShader {
 
     static frag = `
     #ifdef GL_ES
-    precision high float;
+    precision highp float;
     #endif
 
     varying vec4 v_fragmentColor;
@@ -31,6 +31,10 @@ export default class CornerShader {
     uniform float u_interval;
     //宽高比
     uniform float u_ratio;
+    uniform float u_FirstQuaDrant;
+    uniform float u_SecondQuaDrant;
+    uniform float u_ThirdQuaDrant;
+    uniform float u_FourthQuaDrant;
 
     void main()
     {
@@ -48,18 +52,44 @@ export default class CornerShader {
         float validTwo = step(u_cornerSize, u_ratio / 2.0);
         float validResult = step(2.0, validOne + validTwo);
 
-        float judgeOne = step(abs(modifyCoord.x), u_ratio / 2.0 - u_cornerSize);
-        float judgeTwo = step(abs(modifyCoord.y), 0.5 - u_cornerSize);
+        float needCorner = 1.0;
 
-        float interval = distance(abs(modifyCoord), vec2(u_ratio / 2.0 - u_cornerSize, 0.5 - u_cornerSize));
-        float judgeThree = step(interval, u_cornerSize - u_interval);
-
-        //alpha过度区域检测
-        float judgeFour = step(u_cornerSize - u_interval, interval);
-        float judgeFive = step(interval, u_cornerSize);
-
-        gl_FragColor.w = (step(1.0, judgeOne + judgeTwo + judgeThree) 
-        + step(2.0, judgeFour + judgeFive) * (1.0 - (interval - (u_cornerSize - u_interval)) / u_interval)) * validResult + (1.0 - validResult);
+        if(modifyCoord.x > 0.0 && modifyCoord.y > 0.0)
+        {
+            needCorner = u_FirstQuaDrant;
+        }
+        else if(modifyCoord.x > 0.0 && modifyCoord.y < 0.0)
+        {
+            needCorner = u_SecondQuaDrant;
+        }
+        else if(modifyCoord.x < 0.0 && modifyCoord.y < 0.0)
+        {
+            needCorner = u_ThirdQuaDrant;
+        }
+        else
+        {
+            needCorner = u_FourthQuaDrant;
+        }
+        
+        if(needCorner == 1.0)
+        {
+            float judgeOne = step(abs(modifyCoord.x), u_ratio / 2.0 - u_cornerSize);
+            float judgeTwo = step(abs(modifyCoord.y), 0.5 - u_cornerSize);
+    
+            float interval = distance(abs(modifyCoord), vec2(u_ratio / 2.0 - u_cornerSize, 0.5 - u_cornerSize));
+            float judgeThree = step(interval, u_cornerSize - u_interval);
+    
+            //alpha过度区域检测
+            float judgeFour = step(u_cornerSize - u_interval, interval);
+            float judgeFive = step(interval, u_cornerSize);
+    
+            gl_FragColor.w = (step(1.0, judgeOne + judgeTwo + judgeThree) 
+            + step(2.0, judgeFour + judgeFive) * (1.0 - (interval - (u_cornerSize - u_interval)) / u_interval)) * validResult + (1.0 - validResult);
+        }
+        else
+        {
+            gl_FragColor.w = 1.0;
+        }
     }
     `;
 }
